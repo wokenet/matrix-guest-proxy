@@ -1,0 +1,29 @@
+{
+  "name": "matrix-guest-proxy",
+  "version": "1.0.0",
+  "description": "A caching proxy layer for multiple read-only matrix clients",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wokenet/matrix-guest-proxy.git"
+  },
+  "keywords": [
+    "matrix",
+    "guest",
+    "read-only",
+    "proxy"
+  ],
+  "author": "Max Goodhart <c@chromakode.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wokenet/matrix-guest-proxy/issues"
+  },
+  "homepage": "https://github.com/wokenet/matrix-guest-proxy#readme",
+  "dependencies": {
+    "path-to-regexp": "^6.2.0"
+  },
+  "devDependencies": {}
+}
