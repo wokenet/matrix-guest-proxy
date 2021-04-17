@@ -3,9 +3,10 @@ const https = require('https')
 const { match: matchURL } = require('path-to-regexp')
 
 class CachedEndpoint {
-  constructor(pattern, isCachedFunc) {
+  constructor(pattern, { isCachedFunc, modifyURLFunc } = {}) {
     this.match = matchURL(pattern)
     this.isCachedFunc = isCachedFunc
+    this.modifyURLFunc = modifyURLFunc
   }
 
   isCached(searchParams, body) {
@@ -17,6 +18,13 @@ class CachedEndpoint {
       return false
     }
     return this.isCachedFunc ? this.isCachedFunc(searchParams, data) : true
+  }
+
+  modifyURL(url) {
+    if (!this.modifyURLFunc) {
+      return
+    }
+    this.modifyURLFunc(url)
   }
 }
 
@@ -63,14 +71,16 @@ const endpoints = [
   new CachedEndpoint('/_matrix/client/r0/rooms/:room/initialSync'),
   new CachedEndpoint('/_matrix/client/r0/rooms/:room/messages'),
   new CachedEndpoint('/_matrix/client/r0/rooms/:room/state/:stateKey'),
-  new CachedEndpoint(
-    '/_matrix/client/r0/sync',
-    ({ since }, { next_batch }) => since !== next_batch,
-  ),
-  new CachedEndpoint(
-    '/_matrix/client/r0/events',
-    ({ from }, { end }) => from !== end,
-  ),
+  new CachedEndpoint('/_matrix/client/r0/sync', {
+    isCachedFunc: ({ since }, { next_batch }) => since !== next_batch,
+    modifyURLFunc: (url) => {
+      // Strip the cache busting param matrix-js-sdk sends on first sync.
+      url.searchParams.delete('_cacheBuster')
+    },
+  }),
+  new CachedEndpoint('/_matrix/client/r0/events', {
+    isCachedFunc: ({ from }, { end }) => from !== end,
+  }),
 ]
 
 function main() {
@@ -104,6 +114,7 @@ function main() {
     }
 
     reqURL.searchParams.set('access_token', accessToken)
+    endpoint.modifyURL(reqURL)
     const reqURLStr = reqURL.toString()
 
     let cacheEntry = requests.get(reqURLStr)
