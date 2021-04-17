@@ -35,8 +35,10 @@ class CachedResponse {
     this.body = body
   }
 
-  writeTo(response) {
-    response.writeHead(this.statusCode, this.headers).end(this.body)
+  writeTo(response, headers = {}) {
+    response
+      .writeHead(this.statusCode, { ...this.headers, ...headers })
+      .end(this.body)
   }
 }
 
@@ -118,6 +120,7 @@ function main() {
     const reqURLStr = reqURL.toString()
 
     let cacheEntry = requests.get(reqURLStr)
+    const isCacheHit = !!cacheEntry
     if (!cacheEntry) {
       // Make a request and store the promise in the cache index so subsequent requests wait on the same response.
       cacheEntry = makeRequest(reqURLStr)
@@ -147,7 +150,9 @@ function main() {
     // Forward response to client when it's available.
     cacheEntry.then((cachedResponse) => {
       try {
-        cachedResponse.writeTo(res)
+        cachedResponse.writeTo(res, {
+          'mgc-cache-status': isCacheHit ? 'HIT' : 'MISS',
+        })
       } catch (err) {
         console.error('Error sending response:', err)
       }
